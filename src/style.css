@@ -1,0 +1,12 @@
+@tailwind;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Plugins que opcionalmente instaló en el paso 4 */
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* Modo oscuro basado en clases */
+/* @custom-variant dark (&:where(.dark, .dark *)); */
+@variant dark (&:where(.dark, .dark *));
