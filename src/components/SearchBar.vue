@@ -35,7 +35,7 @@ export default {
         v-model="searchQuery"
         type="text"
         placeholder="Buscar notas..."
-        class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-gray-500 focus:ring-gray-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+        class="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
         @keyup.enter="handleSearch"
       />
       <button
@@ -47,7 +47,7 @@ export default {
       </button>
       <button
         @click="handleSearch"
-        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
       >
         <span v-html="SearchIcon"></span>
       </button>

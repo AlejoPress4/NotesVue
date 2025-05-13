@@ -1,6 +1,7 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useToast } from 'vue-toastification';
 import NoteList from '../components/NoteList.vue';
 import { useNotesStore } from '../stores/notes';
 
@@ -13,6 +14,7 @@ export default {
     const route = useRoute();
     const router = useRouter();
     const notesStore = useNotesStore();
+    const toast = useToast();
 
     const loading = ref(true);
     const selectedCategory = ref('');
@@ -78,8 +80,12 @@ export default {
         };
         
         await notesStore.fetchNotes(params);
+        if (searchQuery.value && filteredNotes.value.length === 0) {
+          toast.info(`No se encontraron notas para "${searchQuery.value}"`);
+        }
       } catch (error) {
         console.error('Error al cargar las notas:', error);
+        toast.error('Error al cargar las notas: ' + (error.message || 'Error desconocido'));
       } finally {
         loading.value = false;
       }
@@ -93,8 +99,10 @@ export default {
       if (confirm('¿Estás seguro de que deseas eliminar esta nota?')) {
         try {
           await notesStore.deleteNote(id);
+          toast.success('Nota eliminada correctamente');
         } catch (error) {
           console.error('Error al eliminar la nota:', error);
+          toast.error('Error al eliminar la nota: ' + (error.message || 'Error desconocido'));
         }
       }
     };
@@ -105,9 +113,14 @@ export default {
 
     const toggleFavorite = async (id) => {
       try {
-        await notesStore.toggleFavorite(id);
+        const note = await notesStore.toggleFavorite(id);
+        const message = note.is_favorite 
+          ? 'Nota añadida a favoritos' 
+          : 'Nota eliminada de favoritos';
+        toast.success(message);
       } catch (error) {
         console.error('Error al actualizar favorito:', error);
+        toast.error('Error al actualizar favorito: ' + (error.message || 'Error desconocido'));
       }
     };
 
@@ -141,7 +154,7 @@ export default {
           <div class="relative">
             <select
               v-model="selectedCategory"
-              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white transition-colors duration-200"
+              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white sm:text-sm rounded-md transition-colors duration-200"
             >
               <option value="">Todas las categorías</option>
               <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>

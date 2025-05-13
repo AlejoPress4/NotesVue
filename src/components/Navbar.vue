@@ -1,6 +1,7 @@
 <script>
-import { ref, inject } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useToast } from 'vue-toastification';
 import SearchBar from './SearchBar.vue';
 import { SearchIcon, StarIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon, PlusIcon } from './icons';
 
@@ -11,6 +12,7 @@ export default {
   },
   setup() {
     const router = useRouter();
+    const toast = useToast();
     const isDark = ref(document.documentElement.classList.contains('dark'));
     const isSearchVisible = ref(false);
     const isMenuOpen = ref(false);
@@ -20,9 +22,11 @@ export default {
       if (isDark.value) {
         document.documentElement.classList.add('dark');
         localStorage.setItem('theme', 'dark');
+        toast.info("Modo oscuro activado");
       } else {
         document.documentElement.classList.remove('dark');
         localStorage.setItem('theme', 'light');
+        toast.info("Modo claro activado");
       }
     };
 
@@ -59,7 +63,7 @@ export default {
 </script>
 
 <template>
-  <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+  <nav class="bg-white dark:bg-[#0f0f10] border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <div class="flex items-center">
@@ -68,17 +72,17 @@ export default {
           </router-link>
         </div>
         <div class="hidden md:flex items-center space-x-4">
-          <button @click="toggleSearch" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+          <button @click="toggleSearch" class="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
             <span v-html="SearchIcon"></span>
           </button>
-          <router-link to="/favorites" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+          <router-link to="/favorites" class="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
             <span v-html="StarIcon"></span>
           </router-link>
-          <button @click="toggleDarkMode" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+          <button @click="toggleDarkMode" class="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
             <span v-if="isDark" v-html="SunIcon"></span>
             <span v-else v-html="MoonIcon"></span>
           </button>
-          <router-link to="/notes/new" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
+          <router-link to="/notes/new" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
             Nueva Nota
           </router-link>
         </div>

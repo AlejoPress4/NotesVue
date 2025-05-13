@@ -37,7 +37,7 @@ export default {
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-sm transition-all duration-200 overflow-hidden">
+  <div class="bg-white dark:bg-[#1a202c] rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 overflow-hidden">
     <div class="p-4">
       <div class="flex justify-between items-start">
         <h3 class="text-lg font-medium text-gray-900 dark:text-white truncate">{{ note.title }}</h3>
@@ -46,7 +46,7 @@ export default {
         </button>
       </div>
       <div class="mt-2">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
           {{ note.category }}
         </span>
         <p class="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-3">{{ note.content }}</p>
@@ -54,7 +54,7 @@ export default {
       <div class="mt-4 flex justify-between items-center">
         <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(note.created_at) }}</span>
         <div class="flex space-x-2">
-          <button @click.stop="$emit('edit', note.id)" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200">
+          <button @click.stop="$emit('edit', note.id)" class="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200">
             <span v-html="EditIcon"></span>
           </button>
           <button @click.stop="$emit('delete', note.id)" class="text-gray-400 hover:text-red-500 transition-colors duration-200">

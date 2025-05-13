@@ -1,6 +1,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useToast } from 'vue-toastification';
 import { useNotesStore } from '../stores/notes';
 
 export default {
@@ -14,9 +15,11 @@ export default {
   setup(props) {
     const router = useRouter();
     const notesStore = useNotesStore();
+    const toast = useToast();
 
     const isEditing = ref(!!props.noteId);
     const loading = ref(false);
+    const error = ref(null);
 
     const categories = [
       'Personal',
@@ -42,10 +45,12 @@ export default {
           if (note) {
             form.value = { ...note };
           } else {
+            toast.error('Nota no encontrada');
             router.push('/');
           }
-        } catch (error) {
-          console.error('Error al cargar la nota:', error);
+        } catch (err) {
+          console.error('Error al cargar la nota:', err);
+          toast.error('Error al cargar la nota: ' + (err.message || 'Error desconocido'));
           router.push('/');
         } finally {
           loading.value = false;
@@ -55,16 +60,41 @@ export default {
 
     const saveNote = async () => {
       loading.value = true;
+      error.value = null;
+      
       try {
+        // Validar formulario
+        if (!form.value.title.trim()) {
+          error.value = 'El título es obligatorio';
+          toast.error('El título es obligatorio');
+          loading.value = false;
+          return;
+        }
+        if (!form.value.category) {
+          error.value = 'La categoría es obligatoria';
+          toast.error('La categoría es obligatoria');
+          loading.value = false;
+          return;
+        }
+        if (!form.value.content.trim()) {
+          error.value = 'El contenido es obligatorio';
+          toast.error('El contenido es obligatorio');
+          loading.value = false;
+          return;
+        }
+        
         if (props.noteId) {
           await notesStore.updateNote(props.noteId, form.value);
+          toast.success('Nota actualizada correctamente');
         } else {
           await notesStore.createNote(form.value);
+          toast.success('Nota creada correctamente');
         }
         router.push('/');
-      } catch (error) {
-        console.error('Error al guardar la nota:', error);
-        // Aquí podrías mostrar un mensaje de error al usuario
+      } catch (err) {
+        console.error('Error al guardar la nota:', err);
+        error.value = err.response?.data?.errors || err.message || 'Error al guardar la nota';
+        toast.error('Error al guardar la nota: ' + (Array.isArray(error.value) ? error.value.join(', ') : error.value));
       } finally {
         loading.value = false;
       }
@@ -73,6 +103,7 @@ export default {
     return {
       isEditing,
       loading,
+      error,
       categories,
       form,
       saveNote,
@@ -83,11 +114,11 @@ export default {
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+  <div class="bg-white dark:bg-[#1a202c] rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
     <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ isEditing ? 'Editar Nota' : 'Nueva Nota' }}</h2>
     
     <div v-if="loading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-500"></div>
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
     </div>
     
     <form v-else @submit.prevent="saveNote">
@@ -98,7 +129,7 @@ export default {
             id="title"
             v-model="form.title"
             type="text"
-            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-gray-500 focus:ring-gray-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
             placeholder="Título de la nota"
             required
           />
@@ -109,7 +140,7 @@ export default {
           <select
             id="category"
             v-model="form.category"
-            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-gray-500 focus:ring-gray-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
             required
           >
             <option value="" disabled>Selecciona una categoría</option>
@@ -123,7 +154,7 @@ export default {
             id="content"
             v-model="form.content"
             rows="6"
-            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-gray-500 focus:ring-gray-500 dark:bg-gray-700 dark:text-white transition-colors duration-200"
+            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200"
             placeholder="Escribe el contenido de tu nota aquí..."
             required
           ></textarea>
@@ -134,7 +165,7 @@ export default {
             id="is_favorite"
             v-model="form.is_favorite"
             type="checkbox"
-            class="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 dark:border-gray-600 rounded transition-colors duration-200"
+            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded transition-colors duration-200"
           />
           <label for="is_favorite" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">Marcar como favorita</label>
         </div>
@@ -143,13 +174,13 @@ export default {
           <button
             type="button"
             @click="router.back()"
-            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
           >
             {{ isEditing ? 'Actualizar' : 'Guardar' }}
           </button>

@@ -131,14 +131,14 @@ export default {
         <button 
           @click="viewMode = 'grid'" 
           class="p-2 rounded-md transition-colors duration-200"
-          :class="viewMode === 'grid' ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'"
+          :class="viewMode === 'grid' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'"
         >
           <span v-html="GridIcon"></span>
         </button>
         <button 
           @click="viewMode = 'list'" 
           class="p-2 rounded-md transition-colors duration-200"
-          :class="viewMode === 'list' ? 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'"
+          :class="viewMode === 'list' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'"
         >
           <span v-html="ListIcon"></span>
         </button>
@@ -146,15 +146,15 @@ export default {
     </div>
 
     <div v-if="loading" class="flex justify-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-500"></div>
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
     </div>
 
-    <div v-else-if="notes.length === 0" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 text-center">
+    <div v-else-if="notes.length === 0" class="bg-white dark:bg-[#1a202c] rounded-lg border border-gray-200 dark:border-gray-700 p-6 text-center">
       <span v-html="EmptyNotesIcon"></span>
       <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white">No hay notas</h3>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Comienza creando una nueva nota.</p>
       <div class="mt-6">
-        <router-link to="/notes/new" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-800 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+        <router-link to="/notes/new" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
           Nueva Nota
         </router-link>
       </div>
@@ -174,10 +174,10 @@ export default {
       </div>
 
       <!-- List View -->
-      <div v-else class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div v-else class="bg-white dark:bg-[#1a202c] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-900">
+            <thead class="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Título</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categoría</th>
@@ -185,8 +185,8 @@ export default {
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr v-for="note in notes" :key="note.id" @click="viewNote(note.id)" class="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150">
+            <tbody class="bg-white dark:bg-[#1a202c] divide-y divide-gray-200 dark:divide-gray-700">
+              <tr v-for="note in notes" :key="note.id" @click="viewNote(note.id)" class="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors duration-150">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     <svg v-if="note.is_favorite" key="favorite-star" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -196,7 +196,7 @@ export default {
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
                     {{ note.category }}
                   </span>
                 </td>
@@ -204,7 +204,7 @@ export default {
                   {{ formatDate(note.created_at) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button @click.stop="editNote(note.id)" class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 mr-3">
+                  <button @click.stop="editNote(note.id)" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">
                     Editar
                   </button>
                   <button @click.stop="deleteNote(note.id)" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
@@ -223,7 +223,7 @@ export default {
           <button
             @click="changePage(currentPage - 1)"
             :disabled="currentPage === 1"
-            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1a202c] text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span class="sr-only">Anterior</span>
             <span v-html="PrevIcon"></span>
@@ -233,7 +233,7 @@ export default {
             :key="page"
             @click="changePage(page)"
             :class="[
-              page === currentPage ? 'z-10 bg-gray-100 dark:bg-gray-700 border-gray-500 text-gray-600 dark:text-gray-200' : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700',
+              page === currentPage ? 'z-10 bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-600 dark:text-indigo-200' : 'bg-white dark:bg-[#1a202c] border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800',
               'relative inline-flex items-center px-4 py-2 border text-sm font-medium'
             ]"
           >
@@ -242,7 +242,7 @@ export default {
           <button
             @click="changePage(currentPage + 1)"
             :disabled="currentPage === totalPages"
-            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1a202c] text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span class="sr-only">Siguiente</span>
             <span v-html="NextIcon"></span>
