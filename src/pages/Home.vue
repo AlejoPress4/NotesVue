@@ -29,34 +29,21 @@ export default {
       'Recordatorios'
     ];
 
-    // Computed properties
-    const filteredNotes = computed(() => {
-      let result = [...notesStore.notes];
+    // Computed properties - ahora solo usan los datos del store
+    const totalPages = computed(() => Math.ceil(notesStore.totalItems / notesStore.itemsPerPage));
+    const currentPage = computed(() => notesStore.currentPage);
+    const itemsPerPage = computed(() => notesStore.itemsPerPage);
 
-      // Filter by search query
-      if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        result = result.filter(note => 
-          note.title.toLowerCase().includes(query) || 
-          note.content.toLowerCase().includes(query)
-        );
-      }
-
-      // Filter by category
-      if (selectedCategory.value) {
-        result = result.filter(note => note.category === selectedCategory.value);
-      }
-
-      return result;
-    });
-
+    console.log('Total pages:', totalPages.value);
     // Watch for route query changes
     watch(() => route.query.search, (newQuery) => {
       searchQuery.value = newQuery || '';
+      loadNotes(); // Recargar cuando cambie la búsqueda
     });
 
     watch(() => route.query.category, (newCategory) => {
       selectedCategory.value = newCategory || '';
+      loadNotes(); // Recargar cuando cambie la categoría
     });
 
     // Watch for category selection changes
@@ -69,18 +56,25 @@ export default {
       });
     });
 
+    // Watch totalPages for debugging
+    watch(totalPages, (newTotalPages) => {
+      console.log(`Total pages recalculated: ${newTotalPages}`);
+    });
+
     // Methods
-    const loadNotes = async () => {
+    const loadNotes = async (page = 1) => {
       loading.value = true;
       try {
         const params = {
+          page,
+          limit: notesStore.itemsPerPage,
           category: selectedCategory.value,
-          search: searchQuery.value,
-          favorite: route.path === '/favorites' ? true : undefined
+          search: searchQuery.value
         };
         
         await notesStore.fetchNotes(params);
-        if (searchQuery.value && filteredNotes.value.length === 0) {
+        
+        if (notesStore.notes.length === 0 && searchQuery.value) {
           toast.info(`No se encontraron notas para "${searchQuery.value}"`);
         }
       } catch (error) {
@@ -100,6 +94,8 @@ export default {
         try {
           await notesStore.deleteNote(id);
           toast.success('Nota eliminada correctamente');
+          // Recargar la página actual después de eliminar
+          await loadNotes(currentPage.value);
         } catch (error) {
           console.error('Error al eliminar la nota:', error);
           toast.error('Error al eliminar la nota: ' + (error.message || 'Error desconocido'));
@@ -124,6 +120,24 @@ export default {
       }
     };
 
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        notesStore.goToPage(currentPage.value - 1);
+      }
+    };
+
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        notesStore.goToPage(currentPage.value + 1);
+      }
+    };
+
+    const goToPage = async (page) => {
+      if (page >= 1 && page <= totalPages.value) {
+        await loadNotes(page);
+      }
+    };
+
     // Lifecycle hooks
     onMounted(async () => {
       searchQuery.value = route.query.search || '';
@@ -135,11 +149,17 @@ export default {
       loading,
       selectedCategory,
       categories,
-      filteredNotes,
+      notes: computed(() => notesStore.notes), // Usar directamente las notas del store
       editNote,
       deleteNote,
       viewNote,
-      toggleFavorite
+      toggleFavorite,
+      currentPage,
+      totalPages,
+      itemsPerPage,
+      prevPage,
+      nextPage,
+      goToPage
     };
   }
 }
@@ -165,15 +185,39 @@ export default {
     </div>
 
     <NoteList
-      :notes="filteredNotes"
+      :notes="notes"
       :loading="loading"
-      :current-page="1"
-      :total-pages="1"
+      :current-page="currentPage"
+      :total-pages="totalPages"
       @edit="editNote"
       @delete="deleteNote"
       @view="viewNote"
       @toggle-favorite="toggleFavorite"
+      @page-change="goToPage"
     />
+
+    <!-- Controles de paginación -->
+    <div class="flex justify-between items-center mt-6">
+      <button 
+        @click="prevPage" 
+        :disabled="currentPage === 1"
+        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+      >
+        Anterior
+      </button>
+
+      <span class="text-gray-700 dark:text-gray-300">
+        Página {{ currentPage }}
+      </span>
+
+      <button 
+        @click="nextPage" 
+        :disabled="notes.length < itemsPerPage"
+        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+      >
+        Siguiente
+      </button>
+    </div>
   </div>
 </template>
 

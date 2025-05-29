@@ -1,5 +1,5 @@
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import { useNotesStore } from '../stores/notes';
@@ -39,8 +39,6 @@ export default {
         }
       } catch (error) {
         console.error('Error al cargar la nota:', error);
-        toast.error('Error al cargar la nota: ' + (error.message || 'Error desconocido'));
-        note.value = null;
       } finally {
         loading.value = false;
       }
@@ -84,9 +82,12 @@ export default {
       loadNote();
     });
 
+    watch(() => route.params.id, loadNote);
+
     return {
       note,
       loading,
+      isFavoriteLoading,
       formatDate,
       toggleFavorite,
       deleteNote,
@@ -135,7 +136,10 @@ export default {
           <router-link :to="`/notes/edit/${note.id}`" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
             <span v-html="EditIcon" class="text-gray-600 dark:text-gray-400"></span>
           </router-link>
-          <button @click="deleteNote" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+          <button 
+            @click="deleteNote" 
+            class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+          >
             <span v-html="DeleteIcon" class="text-gray-600 dark:text-gray-400"></span>
           </button>
         </div>

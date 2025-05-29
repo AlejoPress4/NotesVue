@@ -30,33 +30,18 @@ export default {
     ];
 
     // Computed properties
-    const filteredNotes = computed(() => {
-      let result = [...notesStore.notes].filter(note => note.is_favorite);
-
-      // Filter by search query
-      if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        result = result.filter(note => 
-          note.title.toLowerCase().includes(query) || 
-          note.content.toLowerCase().includes(query)
-        );
-      }
-
-      // Filter by category
-      if (selectedCategory.value) {
-        result = result.filter(note => note.category === selectedCategory.value);
-      }
-
-      return result;
-    });
+    const totalPages = computed(() => Math.ceil(notesStore.totalItems / notesStore.itemsPerPage));
+    const currentPage = computed(() => notesStore.currentPage);
 
     // Watch for route query changes
     watch(() => route.query.search, (newQuery) => {
       searchQuery.value = newQuery || '';
+      loadNotes(); // Recargar cuando cambie la búsqueda
     });
 
     watch(() => route.query.category, (newCategory) => {
       selectedCategory.value = newCategory || '';
+      loadNotes(); // Recargar cuando cambie la categoría
     });
 
     // Watch for category selection changes
@@ -70,28 +55,24 @@ export default {
     });
 
     // Methods
-    const loadNotes = async () => {
-      loading.value = true;
-      try {
-        const params = {
-          category: selectedCategory.value,
-          search: searchQuery.value,
-          favorite: true
-        };
-        
-        await notesStore.fetchNotes(params);
-        if (filteredNotes.value.length === 0 && !searchQuery.value && !selectedCategory.value) {
-          toast.info('No tienes notas favoritas');
-        } else if (searchQuery.value && filteredNotes.value.length === 0) {
-          toast.info(`No se encontraron notas favoritas para "${searchQuery.value}"`);
-        }
-      } catch (error) {
-        console.error('Error al cargar las notas favoritas:', error);
-        toast.error('Error al cargar las notas favoritas: ' + (error.message || 'Error desconocido'));
-      } finally {
-        loading.value = false;
+  const loadNotes = async (page = 1) => {
+    loading.value = true;
+    try {
+      await notesStore.goToFavoritePage(page, selectedCategory.value, searchQuery.value);
+
+      if (notesStore.notes.length === 0 && !searchQuery.value && !selectedCategory.value) {
+        toast.info('No tienes notas favoritas');
+      } else if (searchQuery.value && notesStore.notes.length === 0) {
+        toast.info(`No se encontraron notas favoritas para "${searchQuery.value}"`);
       }
-    };
+    } catch (error) {
+      console.error('Error al cargar las notas favoritas:', error);
+      toast.error('Error al cargar las notas favoritas: ' + (error.message || 'Error desconocido'));
+    } finally {
+      loading.value = false;
+    }
+  };
+
 
     const editNote = (id) => {
       router.push(`/notes/edit/${id}`);
@@ -102,6 +83,8 @@ export default {
         try {
           await notesStore.deleteNote(id);
           toast.success('Nota eliminada correctamente');
+          // Recargar la página actual después de eliminar
+          await loadNotes(currentPage.value);
         } catch (error) {
           console.error('Error al eliminar la nota:', error);
           toast.error('Error al eliminar la nota: ' + (error.message || 'Error desconocido'));
@@ -121,13 +104,31 @@ export default {
           : 'Nota eliminada de favoritos';
         toast.success(message);
         
-        // Si estamos en la página de favoritos y quitamos el favorito, recargamos las notas
+        // Si quitamos el favorito, recargar la lista
         if (!note.is_favorite) {
-          await loadNotes();
+          await loadNotes(currentPage.value);
         }
       } catch (error) {
         console.error('Error al actualizar favorito:', error);
         toast.error('Error al actualizar favorito: ' + (error.message || 'Error desconocido'));
+      }
+    };
+
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        notesStore.goToFavoritePage(currentPage.value - 1, selectedCategory.value, searchQuery.value);
+      }
+    };
+
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        notesStore.goToFavoritePage(currentPage.value + 1, selectedCategory.value, searchQuery.value);
+      }
+    };
+
+    const goToPage = async (page) => {
+      if (page >= 1 && page <= totalPages.value) {
+        await notesStore.goToFavoritePage(page, selectedCategory.value, searchQuery.value); // ✅ esto actualiza correctamente el store
       }
     };
 
@@ -142,11 +143,16 @@ export default {
       loading,
       selectedCategory,
       categories,
-      filteredNotes,
+      notes: computed(() => notesStore.notes), // Usar directamente las notas del store
       editNote,
       deleteNote,
       viewNote,
-      toggleFavorite
+      toggleFavorite,
+      currentPage,
+      totalPages,
+      prevPage,
+      nextPage,
+      goToPage
     };
   }
 }
@@ -173,15 +179,39 @@ export default {
 
     <NoteList
       title="Notas Favoritas"
-      :notes="filteredNotes"
+      :notes="notes"
       :loading="loading"
-      :current-page="1"
-      :total-pages="1"
+      :current-page="currentPage"
+      :total-pages="totalPages"
       @edit="editNote"
       @delete="deleteNote"
       @view="viewNote"
       @toggle-favorite="toggleFavorite"
+      @page-change="goToPage"
     />
+
+    <!-- Controles de paginación -->
+    <div v-if="totalPages > 1" class="flex justify-between items-center mt-6">
+      <button 
+        @click="prevPage" 
+        :disabled="currentPage === 1"
+        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+      >
+        Anterior
+      </button>
+      
+      <span class="text-gray-700 dark:text-gray-300">
+        Página {{ currentPage }} de {{ totalPages }}
+      </span>
+      
+      <button 
+        @click="nextPage" 
+        :disabled="currentPage >= totalPages"
+        class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+      >
+        Siguiente
+      </button>
+    </div>
   </div>
 </template>
 

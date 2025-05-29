@@ -1,16 +1,20 @@
 import { defineStore } from "pinia";
-import axios from "axios";
 import { useCrud } from "../composables/useCrud";
 import { ref, computed } from "vue";
 
 const API_URL = "http://localhost:3000/api/notes";
 
 export const useNotesStore = defineStore("notes", () => {
+  // Usar una sola instancia de useCrud
+  const crud = useCrud(API_URL);
   const { items, item, loading, error, list, getById, create, update, remove } =
-    useCrud(API_URL);
+    crud;
 
-  const isLoading = loading;
-  const notes = computed(() => (Array.isArray(items.value) ? items.value : []));
+  // Estado reactivo
+  const notes = ref([]);
+  const currentPage = ref(1);
+  const itemsPerPage = ref(10);
+  const totalItems = ref(0);
   const lastUpdate = ref(null);
   const categories = ref([]);
 
@@ -19,34 +23,40 @@ export const useNotesStore = defineStore("notes", () => {
     return notes.value.filter((note) => note.category === category);
   };
 
-  const getFavoriteNotes = computed(() => {
-    return notes.value.filter((note) => note.is_favorite);
-  });
-  const getUniqueCategories = computed(() => {
-    return Array.isArray(notes.value)
-      ? [...new Set(notes.value.map((note) => note.category))]
-      : [];
-  });
+  const getFavoriteNotes = computed(() =>
+    notes.value.filter((note) => note.is_favorite)
+  );
 
-  // Actions
+  const getUniqueCategories = computed(() =>
+    [...new Set(notes.value.map((note) => note.category))].filter(Boolean)
+  );
+
+  // Acciones
   const fetchNotes = async (params = {}) => {
-    if (isLoading.value) return;
     try {
-      const queryParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, value);
-        }
-      });
+      const queryParams = {
+        ...params,
+        page: params.page ?? currentPage.value,
+        limit: itemsPerPage.value,
+      };
 
-      const url = `${API_URL}?${queryParams.toString()}`;
-      await list(queryParams); // useCrud modificado para aceptar params
-      lastUpdate.value = new Date();
+      const data = await list(queryParams);
+
+      notes.value = items.value;
+      totalItems.value = data?.pagination?.total || notes.value.length;
+      currentPage.value = data?.pagination?.currentPage || currentPage.value;
+
       updateCategories();
+      lastUpdate.value = new Date();
     } catch (err) {
       handleError(err);
       throw err;
     }
+  };
+
+  const goToPage = async (pageNumber) => {
+    currentPage.value = pageNumber;
+    await fetchNotes({ page: pageNumber });
   };
 
   const getNoteById = async (id) => {
@@ -62,7 +72,7 @@ export const useNotesStore = defineStore("notes", () => {
   const createNote = async (noteData) => {
     try {
       const newNote = await create(noteData);
-      updateCategories();
+      await fetchNotes(); // recargar lista
       return newNote;
     } catch (err) {
       handleError(err);
@@ -73,7 +83,7 @@ export const useNotesStore = defineStore("notes", () => {
   const updateNote = async (id, noteData) => {
     try {
       const updated = await update(id, noteData);
-      updateCategories();
+      await fetchNotes({ page: currentPage.value }); // recargar página actual
       return updated;
     } catch (err) {
       handleError(err);
@@ -84,7 +94,7 @@ export const useNotesStore = defineStore("notes", () => {
   const deleteNote = async (id) => {
     try {
       await remove(id);
-      updateCategories();
+      await fetchNotes({ page: currentPage.value }); // recargar página actual
       return true;
     } catch (err) {
       handleError(err);
@@ -96,8 +106,12 @@ export const useNotesStore = defineStore("notes", () => {
     try {
       const note = notes.value.find((n) => n.id === id);
       if (!note) throw new Error("Nota no encontrada");
-      note.is_favorite = !note.is_favorite;
-      const updated = await update(id, note);
+
+      const updated = await update(id, {
+        ...note,
+        is_favorite: !note.is_favorite,
+      });
+      await fetchNotes({ page: currentPage.value }); // actualiza después del cambio
       return updated;
     } catch (err) {
       handleError(err);
@@ -117,14 +131,27 @@ export const useNotesStore = defineStore("notes", () => {
     error.value = null;
   };
 
+  const goToFavoritePage = async (pageNumber, category = "", search = "") => {
+    currentPage.value = pageNumber;
+    await fetchNotes({
+      page: pageNumber,
+      favorite: true,
+      category: category || undefined,
+      search: search || undefined,
+    });
+  };
+
   return {
     // State
     notes,
     item,
-    isLoading,
-    error,
-    categories,
+    currentPage,
+    itemsPerPage,
+    totalItems,
     lastUpdate,
+    categories,
+    isLoading: loading,
+    error,
 
     // Getters
     getNotesByCategory,
@@ -138,6 +165,8 @@ export const useNotesStore = defineStore("notes", () => {
     updateNote,
     deleteNote,
     toggleFavorite,
+    goToPage,
+    goToFavoritePage,
     updateCategories,
     clearError,
   };

@@ -5,6 +5,7 @@ export function useCrud(apiUrl) {
   const item = ref(null);
   const loading = ref(false);
   const error = ref(null);
+  const totalItems = ref(0); // Total items for pagination
 
   const list = async (params = {}) => {
     loading.value = true;
@@ -22,10 +23,13 @@ export function useCrud(apiUrl) {
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      // Aceptamos tanto array directo como { notes: [...] }
-      items.value = Array.isArray(data) ? data : data.notes || [];
+      console.log("Backend response:", data); // Log backend response for debugging
+      items.value = Array.isArray(data.notes) ? data.notes : [];
+      totalItems.value = data.pagination?.total || 0; // Ensure proper handling of pagination
+      return data; // Return the backend response
     } catch (err) {
       error.value = err;
+      throw err;
     } finally {
       loading.value = false;
     }
@@ -128,6 +132,7 @@ export function useCrud(apiUrl) {
     item,
     loading,
     error,
+    totalItems, // Add totalItems to the returned object
     list,
     getById,
     create,
